@@ -1151,17 +1151,44 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
                 {
                     // Init accel_factor:
                     Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-                    accel_factor = 9.81 / v.norm();
+                    // wz and hjh think this line is written by ass
+		    // accel_factor = 9.81 / v.norm();
+                    accel_factor = 1.0;
                     ROS_INFO_STREAM("accel_factor set to: " << accel_factor);
                 }
                 init_accel = true;
                 if (true)
                 {
                     Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-                    v*=accel_factor;
+                    //v*=accel_factor;
+
+		    // wz's calibration
+		    
+                    Eigen::Vector3d v1(-v.y(), -v.z(), v.x());
+                    Eigen::Matrix3d w;
+		   
+		    w<<1.0182827864613384,0.014724560868963694,-0.01579783323961138,
+                        -0.003300559765548677,1.0234066927952026,0.008971512623193623,
+                        -0.0012600983332840914,-0.0025903981589802116,1.001275214613428;
+                    Eigen::Vector3d bias(-0.0652279870486904,-0.379651457181985,0.26274074337265846);
+		    
+		    
+		    //w<<1,0,0,0,1,0,0,0,1;
+                    //Eigen::Vector3d bias(-0.07,-0.380,0.3150);
+		    
+		    v1 = w*v1-bias;
+
+                    Eigen::Vector3d v2(v1.z(), -v1.x(), -v1.y());
+		    v=v2;
+
+
+
                     crnt_reading.x = v.x();
                     crnt_reading.y = v.y();
                     crnt_reading.z = v.z();
+
+
+
                 }
             }
             CIMUHistory::imuData imu_data(crnt_reading, elapsed_camera_ms);
