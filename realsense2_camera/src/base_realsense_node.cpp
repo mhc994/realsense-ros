@@ -1609,13 +1609,21 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     clip_depth(frame, _clipping_distance);
                 }
             }
-            publishFrame(frame, t,
+
+            static int frame_seq = 0, down_sample_rate = -1;
+            if(frame_seq < 1){
+                _pnh.param("down_sample_rate", down_sample_rate, 1);
+            }
+            if(frame_seq<2){
+                publishFrame(frame, t,
                             sip,
                             _image,
                             _info_publisher,
                             _image_publishers, _seq,
                             _camera_info, _optical_frame_id,
                             _encoding);
+            }
+            frame_seq = (frame_seq+1) % (down_sample_rate * 2);
         }
     }
     catch(const std::exception& ex)
